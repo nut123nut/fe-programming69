@@ -1,0 +1,931 @@
+```html
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>การบ้านครั้งที่ 3 · เว็บสั่งเครื่องดื่มหน้าร้าน</title>
+
+<style>
+
+  :root{
+    --bg:#f4f1ea;
+    --card:#ffffff;
+    --ink:#2b2b2b;
+    --muted:#7a7a7a;
+    --brand:#7b4b27;
+    --brand-soft:#efe4d8;
+    --accent:#2f7359;
+    --danger:#c0392b;
+    --line:#e6ded3;
+  }
+
+  *{
+    box-sizing:border-box;
+  }
+
+  body{
+    margin:0;
+    font-family:'Segoe UI','Sarabun',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.7;
+    transition:background .3s,color .3s;
+  }
+
+  /* BONUS B2 : Dark Mode */
+  body.dark{
+    --bg:#1e1b18;
+    --card:#2a2622;
+    --ink:#efe9e2;
+    --muted:#a99f92;
+    --brand-soft:#3a332c;
+    --line:#3d3730;
+  }
+
+  header{
+    background:var(--brand);
+    color:#fff;
+    padding:18px 22px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+
+  header h1{
+    margin:0;
+    font-size:22px;
+  }
+
+  .wrap{
+    max-width:880px;
+    margin:0 auto;
+    padding:22px 16px 60px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+  }
+
+  @media(max-width:720px){
+    .wrap{
+      grid-template-columns:1fr;
+    }
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px 20px;
+    box-shadow:0 2px 8px rgba(0,0,0,.05);
+  }
+
+  .card h2{
+    margin:0 0 12px;
+    font-size:18px;
+    color:var(--brand);
+    border-bottom:2px solid var(--brand-soft);
+    padding-bottom:6px;
+  }
+
+  body.dark .card h2{
+    color:#e0b088;
+  }
+
+  #menu{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .menu-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:var(--brand-soft);
+    border:1px solid var(--line);
+    color:var(--ink);
+    border-radius:10px;
+    padding:12px 16px;
+    font-size:16px;
+    cursor:pointer;
+    font-family:inherit;
+    transition:transform .1s,background .15s;
+    text-align:left;
+  }
+
+  .menu-item:hover{
+    transform:translateY(-2px);
+  }
+
+  .menu-item .price{
+    font-weight:700;
+    color:var(--accent);
+  }
+
+  #order-list{
+    list-style:none;
+    margin:0;
+    padding:0;
+  }
+
+  #order-list li{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 4px;
+    border-bottom:1px dashed var(--line);
+  }
+
+  #order-list li .del{
+    background:none;
+    border:none;
+    color:var(--danger);
+    font-size:18px;
+    cursor:pointer;
+    line-height:1;
+  }
+
+  .empty{
+    color:var(--muted);
+    font-style:italic;
+  }
+
+  .summary{
+    margin-top:14px;
+    padding-top:12px;
+    border-top:2px solid var(--brand-soft);
+    display:flex;
+    justify-content:space-between;
+    font-size:17px;
+    font-weight:700;
+  }
+
+  .summary .total{
+    color:var(--accent);
+  }
+
+  form{
+    margin-top:14px;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+
+  input[type="text"]{
+    flex:1;
+    min-width:140px;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    font-size:15px;
+    font-family:inherit;
+    background:var(--card);
+    color:var(--ink);
+  }
+
+  button.action{
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    padding:10px 18px;
+    font-size:15px;
+    font-family:inherit;
+    cursor:pointer;
+  }
+
+  #message{
+    margin-top:12px;
+    min-height:24px;
+    font-weight:600;
+  }
+
+  .ok{
+    color:var(--accent);
+  }
+
+  .err{
+    color:var(--danger);
+  }
+
+  .ghost{
+    background:rgba(255,255,255,.18);
+    color:#fff;
+    border:1px solid rgba(255,255,255,.4);
+    border-radius:999px;
+    padding:5px 14px;
+    font-size:13px;
+    cursor:pointer;
+    font-family:inherit;
+  }
+
+  #clear{
+    color:var(--danger);
+    border-color:var(--danger);
+    margin-top:12px;
+  }
+
+</style>
+</head>
+
+<body>
+
+<header>
+
+  <h1>☕ ร้านเครื่องดื่ม (สั่งออนไลน์)</h1>
+
+  <!-- BONUS B2 : ปุ่มโหมดมืด -->
+  <button id="dark-toggle" class="ghost">
+    🌙 โหมดมืด
+  </button>
+
+</header>
+
+
+<div class="wrap">
+
+  <!-- ======================================================
+       ฝั่งซ้าย : เมนู
+  ======================================================= -->
+
+  <section class="card">
+
+    <h2>เมนูเครื่องดื่ม</h2>
+
+    <!-- BONUS B1 : ช่องค้นหา -->
+    <input
+      type="text"
+      id="search"
+      placeholder="🔍 ค้นหาเมนู..."
+      style="width:100%;margin-bottom:12px"
+    >
+
+    <!-- JavaScript จะสร้างเมนูตรงนี้ -->
+    <div id="menu"></div>
+
+  </section>
+
+
+  <!-- ======================================================
+       ฝั่งขวา : รายการออเดอร์
+  ======================================================= -->
+
+  <section class="card">
+
+    <h2>รายการที่สั่ง</h2>
+
+    <ul id="order-list">
+
+      <li class="empty" id="empty-hint">
+        ยังไม่ได้สั่งเครื่องดื่ม
+      </li>
+
+    </ul>
+
+
+    <div class="summary">
+
+      <span>
+        จำนวน:
+        <span id="count">0</span>
+        แก้ว
+      </span>
+
+      <span class="total">
+        รวม
+        <span id="total">0</span>
+        บาท
+      </span>
+
+    </div>
+
+
+    <!-- BONUS B3 : ล้างออเดอร์ -->
+    <button
+      id="clear"
+      class="ghost"
+    >
+      🗑 ล้างออเดอร์
+    </button>
+
+
+    <!-- ==================================================
+         ฟอร์มยืนยันออเดอร์
+    =================================================== -->
+
+    <form id="order-form">
+
+      <input
+        type="text"
+        id="customer"
+        placeholder="ชื่อลูกค้า"
+      >
+
+      <button
+        type="submit"
+        class="action"
+      >
+        ยืนยันออเดอร์
+      </button>
+
+    </form>
+
+
+    <div id="message"></div>
+
+  </section>
+
+</div>
+
+
+<script>
+
+/* ============================================================
+   การบ้านครั้งที่ 3
+   เว็บสั่งเครื่องดื่ม
+   ============================================================ */
+
+
+/* ============================================================
+   ข้อมูลตั้งต้น
+   ห้ามแก้ไข
+============================================================ */
+
+const drinks = [
+
+  {
+    name: "อเมริกาโน่เย็น",
+    price: 45
+  },
+
+  {
+    name: "ลาเต้ร้อน",
+    price: 50
+  },
+
+  {
+    name: "ชาไทย",
+    price: 40
+  },
+
+  {
+    name: "โกโก้ปั่น",
+    price: 55
+  },
+
+  {
+    name: "น้ำผึ้งมะนาว",
+    price: 35
+  }
+
+];
+
+
+/* ============================================================
+   State
+============================================================ */
+
+let order = [];
+
+
+/* ============================================================
+   STEP 0
+   อ้างอิง Element
+============================================================ */
+
+const menu =
+  document.getElementById("menu");
+
+const orderList =
+  document.getElementById("order-list");
+
+const countEl =
+  document.getElementById("count");
+
+const totalEl =
+  document.getElementById("total");
+
+const form =
+  document.getElementById("order-form");
+
+const customer =
+  document.getElementById("customer");
+
+const message =
+  document.getElementById("message");
+
+
+/* ============================================================
+   STEP 1
+   สร้างเมนูจาก drinks
+   ใช้ forEach + createElement
+============================================================ */
+
+drinks.forEach(function(d){
+
+  // สร้างปุ่ม
+  const button =
+    document.createElement("button");
+
+  // กำหนด type
+  button.type = "button";
+
+  // กำหนด class
+  button.classList.add("menu-item");
+
+  // แสดงชื่อและราคา
+  button.innerHTML =
+    `<span>${d.name}</span>
+     <span class="price">${d.price} ฿</span>`;
+
+  // เก็บข้อมูลไว้ใน dataset
+  button.dataset.name =
+    d.name;
+
+  button.dataset.price =
+    d.price;
+
+  // เพิ่มปุ่มเข้า #menu
+  menu.appendChild(button);
+
+});
+
+
+/* ============================================================
+   STEP 2
+   render()
+   วาดหน้าจอจาก state
+============================================================ */
+
+function render(){
+
+  // ล้างรายการเดิม
+  orderList.innerHTML = "";
+
+
+  /* ----------------------------------------------------------
+     ถ้ายังไม่มีรายการ
+  ---------------------------------------------------------- */
+
+  if(order.length === 0){
+
+    const emptyHint =
+      document.createElement("li");
+
+    emptyHint.classList.add("empty");
+
+    emptyHint.id = "empty-hint";
+
+    emptyHint.textContent =
+      "ยังไม่ได้สั่งเครื่องดื่ม";
+
+    orderList.appendChild(emptyHint);
+
+  }
+
+
+  /* ----------------------------------------------------------
+     ถ้ามีรายการ
+  ---------------------------------------------------------- */
+
+  else{
+
+    order.forEach(function(item, i){
+
+      // สร้าง li
+      const li =
+        document.createElement("li");
+
+
+      // สร้างข้อความ
+      const itemText =
+        document.createElement("span");
+
+      itemText.textContent =
+        `${item.name} (${item.price} บาท)`;
+
+
+      // สร้างปุ่มลบ
+      const delButton =
+        document.createElement("button");
+
+      delButton.type = "button";
+
+      delButton.classList.add("del");
+
+      delButton.textContent = "✕";
+
+      // เก็บ index
+      delButton.dataset.index = i;
+
+
+      // ใส่ข้อความลง li
+      li.appendChild(itemText);
+
+      // ใส่ปุ่มลบลง li
+      li.appendChild(delButton);
+
+      // ใส่ li ลงในรายการ
+      orderList.appendChild(li);
+
+    });
+
+  }
+
+
+  /* ----------------------------------------------------------
+     คำนวณจำนวนแก้ว
+  ---------------------------------------------------------- */
+
+  const totalCount =
+    order.length;
+
+
+  /* ----------------------------------------------------------
+     คำนวณราคารวม
+  ---------------------------------------------------------- */
+
+  const totalPrice =
+    order.reduce(function(sum, item){
+
+      return sum + item.price;
+
+    }, 0);
+
+
+  // แสดงจำนวน
+  countEl.textContent =
+    totalCount;
+
+  // แสดงยอดรวม
+  totalEl.textContent =
+    totalPrice;
+
+}
+
+
+/* ============================================================
+   STEP 3
+   คลิกเมนูเพื่อสั่ง
+   Event Delegation
+============================================================ */
+
+menu.addEventListener(
+  "click",
+  function(event){
+
+    // ตรวจสอบว่าคลิกปุ่มเมนู
+    const button =
+      event.target.closest(".menu-item");
+
+
+    // ถ้าไม่ได้คลิกเมนู
+    if(!button){
+
+      return;
+
+    }
+
+
+    // อ่านข้อมูลจาก dataset
+    const name =
+      button.dataset.name;
+
+    const price =
+      Number(button.dataset.price);
+
+
+    // เพิ่มรายการลง order
+    order.push({
+
+      name: name,
+
+      price: price
+
+    });
+
+
+    // render ใหม่
+    render();
+
+  }
+);
+
+
+/* ============================================================
+   STEP 4
+   ลบทีละแก้ว
+   Event Delegation
+============================================================ */
+
+orderList.addEventListener(
+  "click",
+  function(event){
+
+    // ตรวจสอบว่าคลิกปุ่มลบ
+    const delButton =
+      event.target.closest(".del");
+
+
+    // ถ้าไม่ได้คลิกปุ่มลบ
+    if(!delButton){
+
+      return;
+
+    }
+
+
+    // อ่าน index
+    const index =
+      Number(delButton.dataset.index);
+
+
+    // ลบรายการ
+    order.splice(index, 1);
+
+
+    // render ใหม่
+    render();
+
+  }
+);
+
+
+/* ============================================================
+   STEP 5
+   ยืนยันออเดอร์
+   submit + preventDefault
+============================================================ */
+
+form.addEventListener(
+  "submit",
+  function(event){
+
+    // ป้องกันหน้าเว็บรีเฟรช
+    event.preventDefault();
+
+
+    // อ่านชื่อลูกค้า
+    const customerName =
+      customer.value.trim();
+
+
+    /* --------------------------------------------------------
+       ตรวจสอบข้อมูล
+    -------------------------------------------------------- */
+
+    if(
+      customerName === "" ||
+      order.length === 0
+    ){
+
+      message.className = "err";
+
+
+      // ไม่กรอกชื่อและไม่ได้สั่ง
+      if(
+        customerName === "" &&
+        order.length === 0
+      ){
+
+        message.textContent =
+          "กรุณากรอกชื่อลูกค้า และเลือกเครื่องดื่มอย่างน้อย 1 แก้ว";
+
+      }
+
+
+      // ไม่กรอกชื่อ
+      else if(
+        customerName === ""
+      ){
+
+        message.textContent =
+          "กรุณากรอกชื่อลูกค้า";
+
+      }
+
+
+      // ไม่ได้สั่งเครื่องดื่ม
+      else{
+
+        message.textContent =
+          "กรุณาเลือกเครื่องดื่มอย่างน้อย 1 แก้ว";
+
+      }
+
+
+      return;
+
+    }
+
+
+    /* --------------------------------------------------------
+       คำนวณยอดรวม
+    -------------------------------------------------------- */
+
+    const totalCount =
+      order.length;
+
+    const totalPrice =
+      order.reduce(function(sum, item){
+
+        return sum + item.price;
+
+      }, 0);
+
+
+    /* --------------------------------------------------------
+       แสดงผล
+       ใช้ textContent ป้องกัน XSS
+    -------------------------------------------------------- */
+
+    message.className = "ok";
+
+    message.textContent =
+      `ออเดอร์ของคุณ ${customerName} ทั้งหมด ${totalCount} แก้ว รวม ${totalPrice} บาท`;
+
+  }
+);
+
+
+/* ============================================================
+   แสดงหน้าจอครั้งแรก
+============================================================ */
+
+render();
+
+
+/* ============================================================
+   BONUS B1
+   ค้นหาเมนูแบบพิมพ์สด
+============================================================ */
+
+const searchInput =
+  document.getElementById("search");
+
+
+if(searchInput){
+
+  searchInput.addEventListener(
+    "input",
+    function(event){
+
+      const keyword =
+        event.target.value
+          .toLowerCase()
+          .trim();
+
+
+      const menuItems =
+        menu.querySelectorAll(".menu-item");
+
+
+      menuItems.forEach(function(item){
+
+        const name =
+          item.dataset.name
+            .toLowerCase();
+
+
+        if(
+          name.includes(keyword)
+        ){
+
+          item.style.display =
+            "flex";
+
+        }
+
+        else{
+
+          item.style.display =
+            "none";
+
+        }
+
+      });
+
+    }
+  );
+
+}
+
+
+/* ============================================================
+   BONUS B2
+   Dark Mode
+============================================================ */
+
+const darkToggle =
+  document.getElementById("dark-toggle");
+
+
+if(darkToggle){
+
+  darkToggle.addEventListener(
+    "click",
+    function(){
+
+      document.body.classList.toggle(
+        "dark"
+      );
+
+    }
+  );
+
+}
+
+
+/* ============================================================
+   BONUS B3
+   ล้างออเดอร์
+============================================================ */
+
+const clearButton =
+  document.getElementById("clear");
+
+
+if(clearButton){
+
+  clearButton.addEventListener(
+    "click",
+    function(){
+
+      // ล้าง order
+      order = [];
+
+
+      // ล้างข้อความ
+      message.textContent = "";
+
+      message.className = "";
+
+
+      // render ใหม่
+      render();
+
+    }
+  );
+
+}
+
+
+/* ============================================================
+   BONUS B4
+   กด Enter ในช่องชื่อไม่รีเฟรช
+   STEP 5 ใช้ preventDefault() แล้ว
+   จึงรองรับการกด Enter อยู่แล้ว
+============================================================ */
+
+
+/* ============================================================
+   BONUS B5
+   hover เมนูด้วย mouseover / mouseout
+============================================================ */
+
+menu.addEventListener(
+  "mouseover",
+  function(event){
+
+    const button =
+      event.target.closest(".menu-item");
+
+
+    if(button){
+
+      button.style.backgroundColor =
+        "var(--line)";
+
+    }
+
+  }
+);
+
+
+menu.addEventListener(
+  "mouseout",
+  function(event){
+
+    const button =
+      event.target.closest(".menu-item");
+
+
+    if(button){
+
+      button.style.backgroundColor =
+        "";
+
+    }
+
+  }
+);
+
+</script>
+
+</body>
+</html>
+```
